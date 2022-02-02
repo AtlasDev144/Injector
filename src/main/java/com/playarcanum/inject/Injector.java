@@ -324,7 +324,7 @@ public final class Injector {
                     }
                 }
                 try {
-                    this.injector.register(clazz.newInstance());
+                    this.injector.register(clazz.newInstance(), string);
                 } catch (InstantiationException e) {
                     e.printStackTrace();
                 } catch (IllegalAccessException e) {
