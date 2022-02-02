@@ -37,8 +37,8 @@ public final class Injector {
     private final Logger logger;
 
     public Injector() {
-        this.registrar = new Registrar(this);
         this.logger = Logger.getLogger("Injector");
+        this.registrar = new Registrar(this);
     }
 
     /**
