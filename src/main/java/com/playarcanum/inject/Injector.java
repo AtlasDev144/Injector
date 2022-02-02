@@ -245,12 +245,11 @@ public final class Injector {
                     injection = this.namedInjectables.get(name);
                 } else {
                     //Search singletons
-                    injection = this.find(field.getType()).orElse(null);
-                    /*for (Object i : this.injectables) {
+                    for (Object i : this.injectables) {
                         if (i.getClass().isAssignableFrom(field.getType())) {
                             injection = i;
                         }
-                    }*/
+                    }
                 }
 
                 if (injection == null) {
