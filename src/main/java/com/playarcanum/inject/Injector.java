@@ -96,7 +96,12 @@ public final class Injector {
                                 } else {
                                     //Look for named object
                                     final Object found = this.namedInjectables.get(name);
+
                                     logger.severe("named: " + this.namedInjectables.toString()); //TODO remove
+                                    this.namedInjectables.forEach((n, object) -> {
+                                        logger.severe("==? " + name + " " + n + " " + name.equalsIgnoreCase(n) + " " + name.equals(n));
+                                    });
+
                                     if(found != null) {
                                         if(found.getClass().isAssignableFrom(arg) || arg.isAssignableFrom(found.getClass())) {
                                             assistedParams.put(i, arg.cast(found));
