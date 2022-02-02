@@ -8,6 +8,10 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 
+/**
+ * An annotation that tells the {@link Injector} which constructor arguments to provide values for
+ * when {@link Injector#construct(Class, Object...)} is used to instantiate a class.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(PARAMETER)
 public @interface Assisted {

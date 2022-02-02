@@ -17,14 +17,19 @@ import java.util.logging.Logger;
 
 /**
  * This processes the {@link Inject} annotation and tries to inject classes into the annotated fields.
- * <p>
- * To use this:
  *
- * TODO fill this out
- * 1) Singleton
- * 2) Inject
- * 3) Assisted
- * 4) Injector#create
+ * {@link Singleton} tells the {@link Injector} that it can only contain one of those classes. This annotation, although
+ * not necessary, promotes good practice and will probably be on the majority of the objects in an {@link Injector}.
+ *
+ * {@link Inject} tells the {@link Injector} which fields to provide values for when an object calls
+ * {@link Injector#inject(Object)} in its constructor. This <i>must</i> be on any field that needs to be injected.
+ *
+ * {@link Assisted} tells the {@link Injector} which arguments to provide values for. {@link Assisted} only works
+ * on constructor arguments. For {@link Assisted} values to be provided, {@link Injector#construct(Class, Object...)}
+ * must be used to create that instantiated class.
+ *
+ * {@link Injector#construct(Class, Object...)} is the method to use when you need {@link Assisted} values to be
+ * provided as constructor arguments.
  */
 @SuppressWarnings("ALL")
 public final class Injector {
@@ -123,18 +128,6 @@ public final class Injector {
                     if(!assistedHandled) {
                         final Object param = parametersCopy.poll();
                         assistedParams[i] = param;
-                        /*if(!param.getClass().isAssignableFrom(arg) && !arg.isAssignableFrom(param.getClass())) {
-                            try {
-                                logger.severe("--- arg: " + arg.getSimpleName() + " param: " + param.getClass().getSimpleName());
-                                assistedParams[i] = arg.cast(param);
-                            } catch (ClassCastException e) {
-                                throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
-                                    " while trying to instantiate class of type: " + type.getSimpleName() + " via Injector#construct");
-                            }
-                        } else {
-                            //Else if we have the value in the parameters, add it
-                            assistedParams[i] = param;
-                        }*/
                     }
                 }
 

@@ -10,8 +10,6 @@ import static java.lang.annotation.ElementType.FIELD;
 
 /**
  * This tells the {@link Injector} that this Field needs to have its value injected.
- * The {@code side} specified in this annotation must be compatible with the
- * 'side' specified in the {@link Singleton} annotated class.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(FIELD)
