@@ -86,7 +86,24 @@ public final class Injector {
                                 //See if we're looking for a named object
                                 final String name = ((Assisted)annotation).name();
 
-                                if(name.isEmpty()) {
+                                Object injection;
+                                if(!name.isEmpty()) {
+                                    injection = this.namedInjectables.get(name);
+                                } else {
+                                    injection = this.find(arg).orElse(null);
+                                }
+
+                                if(injection != null) {
+                                    assistedParams.put(i, arg.cast(injection));
+                                    assistedHandled = true;
+                                } else throw name.isEmpty() ? new InjectorException("Cannot find an injectable dependency for @Assisted paramter: "
+                                + params[i].getSimpleName() + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                        "Was a corresponding depency registered for this?") :
+                                        new InjectorException("Cannot find an injectable dependency for @Assisted named paramter: "
+                                                + params[i].getSimpleName() + ", of assisted named: " + name + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                                "Was a corresponding depency registered for this?");
+
+                                /*if(name.isEmpty()) {
                                     //Look for singleton object
                                     final Optional<Object> found = (Optional<Object>) this.find(arg);
                                     if(found.isPresent()) {
@@ -111,7 +128,7 @@ public final class Injector {
                                                 " Argument type: " + arg.getSimpleName() + ". Found type: " + found.getClass().getSimpleName());
                                     } throw new InjectorException("@Assisted value of type: " + arg.getSimpleName() +
                                             " with name: " + name +  " can't be found in the Injector's registry.");
-                                }
+                                }*/
                             }
                         }
                     }
