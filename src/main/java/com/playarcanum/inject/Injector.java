@@ -57,24 +57,34 @@ public final class Injector {
 
             //Get classes of given parameters
             final Class<?>[] params = new Class[parameters == null ? 0 : parameters.length];
-
-            final Map<Integer, Object> assistedParams = new HashMap<>();
-
             if(params.length > 0) {
                 for(int i = 0; i < parameters.length; i++) {
                     params[i] = parameters[i].getClass();
                 }
             }
 
+            //Iterate through each constructor, looking for one we can use
             for(final Constructor<?> con : type.getDeclaredConstructors()) {
                 if(constructor != null) continue;
 
                 //If it's a default constructor, return a new instance
                 if(con.getParameterCount() == 0) return (T) con.newInstance();
 
+                //The parameter values to give the constructor
+                final Object[] assistedParams = new Object[con.getParameterCount()];
+
+                final Queue<Object> parametersCopy = new ArrayDeque<>();
+                for(final Object param : parameters) {
+                    parametersCopy.add(param);
+                }
+
+                //Classes of this constructor's arguments
                 final Class<?>[] argsClasses = con.getParameterTypes();
+
+                //The annotations of each argument
                 final Annotation[][] argAnnotations = con.getParameterAnnotations();
 
+                //Iterate each argument
                 for(int i = 0; i < argsClasses.length; i++) {
                     //We need to ensure every argument is account for, either by @Assisted or by the parameters passed in
                     final Class<?> arg = argsClasses[i];
@@ -86,6 +96,7 @@ public final class Injector {
                                 //See if we're looking for a named object
                                 final String name = ((Assisted)annotation).name();
 
+                                //Find the named object or the singleton object if not named
                                 Object injection;
                                 if(!name.isEmpty()) {
                                     injection = this.namedInjectables.get(name);
@@ -93,8 +104,9 @@ public final class Injector {
                                     injection = this.find(arg).orElse(null);
                                 }
 
+                                //Found an applicable injectable dependency
                                 if(injection != null) {
-                                    assistedParams.put(i, arg.cast(injection));
+                                    assistedParams[i] = arg.cast(injection);
                                     assistedHandled = true;
                                 } else throw name.isEmpty() ? new InjectorException("Cannot find an injectable dependency for @Assisted paramter: "
                                 + params[i].getSimpleName() + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
@@ -102,63 +114,28 @@ public final class Injector {
                                         new InjectorException("Cannot find an injectable dependency for @Assisted named paramter: "
                                                 + params[i].getSimpleName() + ", of assisted named: " + name + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
                                                 "Was a corresponding depency registered for this?");
-
-                                /*if(name.isEmpty()) {
-                                    //Look for singleton object
-                                    final Optional<Object> found = (Optional<Object>) this.find(arg);
-                                    if(found.isPresent()) {
-                                        assistedParams.put(i, arg.cast(found.get()));
-                                        assistedHandled = true;
-                                    } else throw new InjectorException("@Assisted value of type: " + arg.getSimpleName() +
-                                            "can't be found in the Injector's registry.");
-                                } else {
-                                    //Look for named object
-                                    final Object found = this.namedInjectables.get(name);
-
-                                    logger.severe("named: " + this.namedInjectables.containsKey(name) + " " + this.namedInjectables.toString()); //TODO remove
-                                    this.namedInjectables.forEach((n, object) -> {
-                                        logger.severe("==? " + name + " " + n + " " + name.equalsIgnoreCase(n) + " " + name.equals(n));
-                                    });
-
-                                    if(found != null) {
-                                        if(found.getClass().isAssignableFrom(arg) || arg.isAssignableFrom(found.getClass())) {
-                                            assistedParams.put(i, arg.cast(found));
-                                            assistedHandled = true;
-                                        } else throw new InjectorException("Type mismatch when finding named @Assisted value in Injector#construct." +
-                                                " Argument type: " + arg.getSimpleName() + ". Found type: " + found.getClass().getSimpleName());
-                                    } throw new InjectorException("@Assisted value of type: " + arg.getSimpleName() +
-                                            " with name: " + name +  " can't be found in the Injector's registry.");
-                                }*/
                             }
                         }
                     }
 
+                    //This arg can't be found in the assisted values present in the Injector, so get the next passed param
+                    //This assumes the passed params were passed in order of necessity by the developer
                     if(!assistedHandled) {
-                        //This arg can't be found in the assisted values present in the Injector,
-                        //so do we have a parameter available for it?
-                        if(parameters != null && parameters.length > 0) {
-                            for(int j = 0; j < params.length; j++) {
-                                final Class<?> param = params[j];
-                                if(!param.isAssignableFrom(arg) && !arg.isAssignableFrom(param)) {
-                                    throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
-                                            " while trying to instantiate class of type: " + type.getSimpleName() + " via Injector#construct");
-                                } else {
-                                    //Else if we have the value in the parameters, add it
-                                    assistedParams.put(j, parameters[j]);
-                                }
-                            }
-                        } else throw new InjectorException("Parameter values weren't handled by @Assisted values nor " +
-                                "were any suitable values passed into Injector#construct's 'parameters' for type: " + type.getSimpleName());
+                        final Object param = parametersCopy.poll();
+                        if(!param.getClass().isAssignableFrom(arg) && !arg.isAssignableFrom(param.getClass())) {
+                            throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
+                                    " while trying to instantiate class of type: " + type.getSimpleName() + " via Injector#construct");
+                        } else {
+                            //Else if we have the value in the parameters, add it
+                            assistedParams[i] = param;
+                        }
                     }
                 }
 
                 //We've now found an applicable constructor because every argument has been accounted for.
                 constructor = (Constructor<T>) con;
-            }
-
-            if(constructor != null) {
                 constructor.setAccessible(true);
-                T instance = constructor.newInstance(assistedParams.values().toArray());
+                T instance = constructor.newInstance(assistedParams);
 
                 this.inject(instance);
                 return instance;
