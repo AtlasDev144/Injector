@@ -85,6 +85,7 @@ public final class Injector {
                             if(annotation instanceof Assisted) {
                                 //See if we're looking for a named object
                                 final String name = ((Assisted)annotation).name();
+
                                 if(name.isEmpty()) {
                                     //Look for singleton object
                                     final Optional<Object> found = (Optional<Object>) this.find(arg);
@@ -97,7 +98,7 @@ public final class Injector {
                                     //Look for named object
                                     final Object found = this.namedInjectables.get(name);
 
-                                    logger.severe("named: " + this.namedInjectables.toString()); //TODO remove
+                                    logger.severe("named: " + this.namedInjectables.containsKey(name) + " " + this.namedInjectables.toString()); //TODO remove
                                     this.namedInjectables.forEach((n, object) -> {
                                         logger.severe("==? " + name + " " + n + " " + name.equalsIgnoreCase(n) + " " + name.equals(n));
                                     });
