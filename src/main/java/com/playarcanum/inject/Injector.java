@@ -123,8 +123,13 @@ public final class Injector {
                     if(!assistedHandled) {
                         final Object param = parametersCopy.poll();
                         if(!param.getClass().isAssignableFrom(arg) && !arg.isAssignableFrom(param.getClass())) {
-                            throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
+                            try {
+                                assistedParams[i] = arg.cast(param);
+                            } catch (ClassCastException e) {
+                                throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
                                     " while trying to instantiate class of type: " + type.getSimpleName() + " via Injector#construct");
+                            }
+
                         } else {
                             //Else if we have the value in the parameters, add it
                             assistedParams[i] = param;
