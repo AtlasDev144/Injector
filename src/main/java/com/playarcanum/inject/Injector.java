@@ -96,6 +96,7 @@ public final class Injector {
                                 } else {
                                     //Look for named object
                                     final Object found = this.namedInjectables.get(name);
+                                    logger.severe("named: " + this.namedInjectables.toString()); //TODO remove
                                     if(found != null) {
                                         if(found.getClass().isAssignableFrom(arg) || arg.isAssignableFrom(found.getClass())) {
                                             assistedParams.put(i, arg.cast(found));
@@ -192,7 +193,7 @@ public final class Injector {
             this.logger.severe("Tried registering an @Singleton class as a named class: " + injection.getClass().getSimpleName());
         } else {
             this.namedInjectables.put(name, injection);
-            this.logger.info("Injector registered: " + injection.getClass().getSimpleName());
+            this.logger.info("Injector registered: " + injection.getClass().getSimpleName() + " with name: " + name);
         }
     }
 
