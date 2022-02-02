@@ -122,7 +122,8 @@ public final class Injector {
                     //This assumes the passed params were passed in order of necessity by the developer
                     if(!assistedHandled) {
                         final Object param = parametersCopy.poll();
-                        if(!param.getClass().isAssignableFrom(arg) && !arg.isAssignableFrom(param.getClass())) {
+                        assistedParams[i] = param;
+                        /*if(!param.getClass().isAssignableFrom(arg) && !arg.isAssignableFrom(param.getClass())) {
                             try {
                                 logger.severe("--- arg: " + arg.getSimpleName() + " param: " + param.getClass().getSimpleName());
                                 assistedParams[i] = arg.cast(param);
@@ -130,11 +131,10 @@ public final class Injector {
                                 throw new InjectorException("A value for argument type: " + arg.getSimpleName() + " can't be found" +
                                     " while trying to instantiate class of type: " + type.getSimpleName() + " via Injector#construct");
                             }
-
                         } else {
                             //Else if we have the value in the parameters, add it
                             assistedParams[i] = param;
-                        }
+                        }*/
                     }
                 }
 
