@@ -1,0 +1,9 @@
+com\playarcanum\inject\Injector$Registrar.class
+com\playarcanum\inject\Injector.class
+com\playarcanum\inject\InjectorModule.class
+com\playarcanum\inject\annotations\Inject$Side.class
+com\playarcanum\inject\annotations\Inject.class
+com\playarcanum\inject\annotations\Assisted.class
+com\playarcanum\inject\Injector$InjectorException.class
+com\playarcanum\inject\annotations\Singleton.class
+com\playarcanum\Nullable.class
