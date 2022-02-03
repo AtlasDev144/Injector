@@ -1,6 +1,6 @@
-package com.playarcanum.inject.module;
+package com.playarcanum.olympus.module;
 
-import com.playarcanum.inject.annotations.Singleton;
+import com.playarcanum.olympus.annotations.Singleton;
 import lombok.NonNull;
 
 /**

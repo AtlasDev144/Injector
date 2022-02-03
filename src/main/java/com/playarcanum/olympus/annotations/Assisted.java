@@ -1,6 +1,6 @@
-package com.playarcanum.inject.annotations;
+package com.playarcanum.olympus.annotations;
 
-import com.playarcanum.inject.Injector;
+import com.playarcanum.olympus.Injector;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

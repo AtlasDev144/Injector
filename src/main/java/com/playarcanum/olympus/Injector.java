@@ -1,10 +1,10 @@
-package com.playarcanum.inject;
+package com.playarcanum.olympus;
 
 import com.playarcanum.Nullable;
-import com.playarcanum.inject.annotations.Assisted;
-import com.playarcanum.inject.annotations.Inject;
-import com.playarcanum.inject.annotations.Singleton;
-import com.playarcanum.inject.module.AbstractInjectorModule;
+import com.playarcanum.olympus.annotations.Assisted;
+import com.playarcanum.olympus.annotations.Inject;
+import com.playarcanum.olympus.annotations.Singleton;
+import com.playarcanum.olympus.module.AbstractInjectorModule;
 import lombok.Getter;
 import lombok.NonNull;
 

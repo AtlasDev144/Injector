@@ -1,4 +1,4 @@
-package com.playarcanum.inject.module;
+package com.playarcanum.olympus.module;
 
 import lombok.Getter;
 import lombok.NonNull;
