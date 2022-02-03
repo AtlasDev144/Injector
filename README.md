@@ -1,3 +1,3 @@
 # Olympus
 A dependency-injection framework inspired by Google's Guice.
-![visitors](https://visitor-badge.glitch.me/badge?AtlasDev144.Olympus=AtlasDev144.Olympus)
+[![](https://jitpack.io/v/AtlasDev144/Olympus.svg)](https://jitpack.io/#AtlasDev144/Olympus)
