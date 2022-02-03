@@ -78,7 +78,7 @@ First, we need to ensure the classes that we are registering in the `Injector` h
 ```java
 @Singleton
 public final class Test {
-  public final String message = "This is the Test class".
+  public final String message = "This is the Test class";
 }
 ```
 
