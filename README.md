@@ -3,7 +3,7 @@ A dependency-injection framework inspired by Google's Guice.
 
 [![](https://jitpack.io/v/AtlasDev144/Olympus.svg)](https://jitpack.io/#AtlasDev144/Olympus)
 
-The simplified idea behind this is that you register classes in an `Injector`, essentially telling it that those are dependencies you'll later what access to.
+The simplified idea behind this is that you register classes in an `Injector`, essentially telling it that those are dependencies you'll later want access to.
 In layman's terms, it's like saying to the Injector "Hey buddy, here's alllll of these things. Hold on to them and just give them to me whenever I ask, anywhere in my code".
 
 
