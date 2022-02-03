@@ -12,6 +12,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -44,6 +45,12 @@ public final class Injector {
     public Injector() {
         this.logger = Logger.getLogger("Injector");
         this.registrar = new Registrar(this);
+    }
+
+    public static class InjectorException extends Exception {
+        public InjectorException(final String message) {
+            super(message);
+        }
     }
 
     /**
@@ -152,10 +159,100 @@ public final class Injector {
         return null;
     }
 
-    public static class InjectorException extends Exception {
-        public InjectorException(final String message) {
-            super(message);
+    /**
+     * Invokes the specified {@code method} on the given {@code instance}, providing {@link Assisted} arguments
+     * and using the given optional {@code arguments}.
+     * @param instance
+     * @param method
+     * @param arguments
+     * @param <T>
+     * @return
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws InjectorException
+     */
+    public <T> T invoke(final Object instance, final @NonNull String method, final Object... arguments) throws InvocationTargetException, IllegalAccessException, InjectorException {
+        final Method[] methods = instance.getClass().getDeclaredMethods();
+
+        //Get classes of given parameters
+        final Class<?>[] params = new Class[arguments == null ? 0 : arguments.length];
+        if(params.length > 0) {
+            for(int i = 0; i < arguments.length; i++) {
+                params[i] = arguments[i].getClass();
+            }
         }
+
+        //Find the specified method
+        for(final Method m : methods) {
+            if(m.getName().equalsIgnoreCase(method)) {
+                //If it has no arguments
+                if(m.getParameterCount() == 0) return (T) m.invoke(instance);
+
+                //The parameter values to give the method
+                final Object[] assistedParams = new Object[m.getParameterCount()];
+
+                final Queue<Object> parametersCopy = new ArrayDeque<>();
+                for(final Object param : arguments) {
+                    parametersCopy.add(param);
+                }
+
+                //Classes of this method's arguments
+                final Class<?>[] argsClasses = m.getParameterTypes();
+
+                //The annotations of each argument
+                final Annotation[][] argAnnotations = m.getParameterAnnotations();
+
+                //Iterate each argument
+                for(int i = 0; i < argsClasses.length; i++) {
+                    //We need to ensure every argument is account for, either by @Assisted or by the parameters passed in
+                    final Class<?> arg = argsClasses[i];
+
+                    boolean assistedHandled = false;
+                    if(argAnnotations[i] != null) {
+                        for(final Annotation annotation : argAnnotations[i]) {
+                            if(annotation instanceof Assisted) {
+                                //See if we're looking for a named object
+                                final String name = ((Assisted)annotation).name();
+
+                                //Find the named object or the singleton object if not named
+                                Object injection;
+                                if(!name.isEmpty()) {
+                                    injection = this.namedInjectables.get(name);
+                                } else {
+                                    injection = this.find(arg).orElse(null);
+                                }
+
+                                //Found an applicable injectable dependency
+                                if(injection != null) {
+                                    assistedParams[i] = arg.cast(injection);
+                                    assistedHandled = true;
+                                } else throw name.isEmpty() ? new InjectorException("Cannot find an injectable dependency for @Assisted paramter: "
+                                        + params[i].getSimpleName() + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                        "Was a corresponding depency registered for this?") :
+                                        new InjectorException("Cannot find an injectable dependency for @Assisted named paramter: "
+                                                + params[i].getSimpleName() + ", of assisted named: " + name + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                                "Was a corresponding depency registered for this?");
+                            }
+                        }
+                    }
+
+                    //This arg can't be found in the assisted values present in the Injector, so get the next passed param
+                    //This assumes the passed params were passed in order of necessity by the developer
+                    if(!assistedHandled) {
+                        final Object param = parametersCopy.poll();
+                        assistedParams[i] = param;
+                    }
+                }
+
+                boolean canInvoke = true;
+                for(int i = 0; i < assistedParams.length; i++) {
+                    if(assistedParams[i] == null) canInvoke = false;
+                }
+
+                if(canInvoke) return (T) m.invoke(instance, assistedParams);
+            }
+        }
+        return null;
     }
 
     /**
