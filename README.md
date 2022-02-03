@@ -173,7 +173,7 @@ this.injector().construct(Example.class, player);
 ```
 As you can see, even though we are constructing the class via the `Injector`, we still **must** call `YourMainClass.INSTANCE.getInjector().inject(this);` to actually get the `@Inject`ed field populated.
 
-##Edge-case, Non-Singleton Dependencies
+## Edge-case, Non-Singleton Dependencies
 
 Personally, I don't currently see too many use cases for this, however, here it is. You may have asked, "well if every dependency I register in the `Injector` has to be a singleton, what if I want multiple instances of something in the `Injector`?". Enter the `name` value for `@Inject` and `@Assisted`. Say we have the now, non-singleton:
 ```java
