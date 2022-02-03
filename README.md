@@ -9,6 +9,32 @@ A dependency-injection framework inspired by Google's [Guice](https://github.com
 The simplified idea behind this is that you register classes in an `Injector`, essentially telling it that those are dependencies you'll later want access to.
 In layman's terms, it's like saying to the Injector "Hey buddy, here's alllll of these things. Hold on to them and just give them to me whenever I ask, anywhere in my code".
 
+## Installation
+For Maven:
+```
+<repository>
+	<id>jitpack.io</id>
+	<url>https://jitpack.io</url>
+</repository>
+
+<dependency>
+	  <groupId>com.github.AtlasDev144</groupId>
+	  <artifactId>Olympus</artifactId>
+	  <version>0.0.6.k</version>
+</dependency>
+```
+
+For Gradle:
+```
+repositories {
+	  maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+	  implementation 'com.github.AtlasDev144:Olympus:0.0.6.k'
+}
+```
+
 
 ## Registration
 
