@@ -399,43 +399,7 @@ public final class Injector {
                     }
                 }
             }
-            this.injector.register(clazz.newInstance());
-            debug.info("Finished Injector Registration!");
-            return this;
-        }
-
-        /**
-         * Registers a class instance to be used for injection and tries to instantiate all embedded injected classes this needs.
-         * Assumes the passed class and all embedded injected classes all have a default constructor.
-         * Always try to use the {@link Registrar#register(Class)} instead.
-         *
-         * @param instance
-         * @return
-         * @throws InstantiationException
-         * @throws IllegalAccessException
-         */
-        public Registrar register(final Object instance) throws InstantiationException, IllegalAccessException {
-            debug.info("Beginning Injector Registration...");
-            //Get all fields marked for injection within this class
-            List<Class<?>> injected = new ArrayList<>();
-            Field[] fields = instance.getClass().getDeclaredFields();
-            for (Field field : fields) {
-                if (field.isAnnotationPresent(Inject.class)) {
-                    injected.add(field.getType());
-                }
-            }
-
-            //Ensure all necessary injected classes that this class needs are already created
-            if (!injected.isEmpty()) {
-                for (Class<?> inject : injected) {
-                    Optional<?> loaded = this.injector.find(inject);
-                    if (!loaded.isPresent()) {
-                        this.register(inject);
-                        loaded = this.injector.find(inject);
-                    }
-                }
-            }
-            this.injector.register(instance);
+            this.injector.register(this.injector.construct(clazz));
             debug.info("Finished Injector Registration!");
             return this;
         }
