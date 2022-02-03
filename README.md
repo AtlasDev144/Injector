@@ -173,6 +173,44 @@ this.injector().construct(Example.class, player);
 ```
 As you can see, even though we are constructing the class via the `Injector`, we still **must** call `YourMainClass.INSTANCE.getInjector().inject(this);` to actually get the `@Inject`ed field populated.
 
+## Assisted Methods
+
+Lets say we have the same `PlayerInfo` class above, but rather than setting the `Zone` in the constructor, we want to set the `Zone` via a method, that way we could keep that `Zone` updated, rather than only getting to set it once:
+```java
+public final class PlayerInfo {
+  private Zone zone;
+  private final Player player;
+  
+  public PlayerInfo(final Player player) { this.player = player; }
+  
+  /**
+  * Return the updated Zone.
+  */
+  public Zone updateZone(@Assisted Zones zones) {
+    this.zone = zones.find(this.player).orElse(null);
+    return this.zone;
+  }
+}
+```
+
+To invoke `@Assisted` methods, we must call it in a special way, much like an `@Assisted` constructor:
+```java
+final PlayerInfo playerInfo = new PlayerInfo(player);
+
+final Zone result = this.injector().invoke(playerInfo, "updateZone");
+```
+
+Just like with `.construct(...)`, we can pass optional arguments into `.invoke(...)`:
+```java
+public Zone updateZone(@Assisted Zones zones, int something, String somethingElse) {
+    this.zone = zones.find(this.player).orElse(null);
+    return this.zone;
+}
+  
+...somewhere else...
+final Zone result = this.injector().invoke(playerInfo, "updateZone", 3, "a string");
+```
+
 ## Edge-case, Non-Singleton Dependencies
 
 Personally, I don't currently see too many use cases for this, however, here it is. You may have asked, "well if every dependency I register in the `Injector` has to be a singleton, what if I want multiple instances of something in the `Injector`?". Enter the `name` value for `@Inject` and `@Assisted`. Say we have the now, non-singleton:
