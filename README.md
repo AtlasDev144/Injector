@@ -1,6 +1,6 @@
 # Olympus
 
-![alt text](https://drive.google.com/file/d/1FI3LDm6RhokRvia77rFKWzg7wgqfQtyi/view?usp=sharing)
+![Alt text](/olympus.jpg?raw=true "Olympus")
 
 A dependency-injection framework inspired by Google's [Guice](https://github.com/google/guice).
 
