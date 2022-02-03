@@ -164,6 +164,7 @@ public final class Example {
     YourMainClass.INSTANCE.getInjector().inject(this);
     
     this.zone = zones.find(player).orElse(null);
+    System.out.println(this.test.message);
   }
 }
 
