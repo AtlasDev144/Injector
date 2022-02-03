@@ -11,10 +11,10 @@ In layman's terms, it's like saying to the Injector "Hey buddy, here's alllll of
 
 ## Installation
 For Maven:
-```java
+```
 <repository>
-		<id>jitpack.io</id>
-	  <url>https://jitpack.io</url>
+	<id>jitpack.io</id>
+	<url>https://jitpack.io</url>
 </repository>
 
 <dependency>
@@ -25,7 +25,7 @@ For Maven:
 ```
 
 For Gradle:
-```java
+```
 repositories {
 	  maven { url 'https://jitpack.io' }
 }
