@@ -6,7 +6,7 @@ A dependency-injection framework inspired by Google's Guice.
 The simplified idea behind this is that you register classes in an `Injector`, essentially telling it that those are dependencies you'll later what access to.
 In layman's terms, it's like saying to the Injector "Hey buddy, here's alllll of these things. Hold on to them and just give them to me whenever I ask, anywhere in my code".
 
-#Registration
+## Registration
 
 So the first thing you'll want to do is create an `Injector`. The `Injector` is where all the magic happens.
 ```java
@@ -70,7 +70,7 @@ As you can see, we've now embedded two submodules. Also, you can chain `.bind(..
 injector.register(new EngineModule());
 ```
 
-#Injection
+## Injection
 
 Cool! Now we have a few dependencies registered and ready to be injected, but how exactly do we do that?
 
@@ -97,7 +97,7 @@ public final class Example {
 ```
 Get an instance of your `Injector` and call `.inject(this)`. That's it! The `Injector` will now go through all the fields in the class marked as `@Inject`, populating each one with a corresponding value of the same type if it has it. We can now start calling functionality on these fields since they've been injected!
 
-#Assisting
+## Assisting
 
 That's really cool, but what if you don't need an injectable class instance itself, but information from it or just need to use it once and forget it? Well we have a handy `@Assisted` annotation for that very thing! Lets say we have a `Zone` class that represents an area on the map and keeps track of all the players within it. We also have a `Zones` class that keeps track of all the `Zone`s themselves. 
 ```java
@@ -151,7 +151,8 @@ final PlayerInfo playerInfo = this.injector().construct(PlayerInfo.class, player
 ```
 You must give all the non-`@Assisted` arguments for that class' instantiation. If there are none, and **all** the arguments are `@Assisted`, then simply pass nothing like so: `.construct(PlayerInfo.class)`. For the arguments you do give, you're expected to give them in order, otherwise the `Injector` won't be able to instantiate the class.
 
-#Combining Inject and Assisted
+## Combining Inject and Assisted
+
 Now that you know how to use `@Inject` and `@Assisted`, let's put them together.
 ```java
 public final class Example {
@@ -171,7 +172,7 @@ this.injector().construct(Example.class, player);
 ```
 As you can see, even though we are constructing the class via the `Injector`, we still **must** call `YourMainClass.INSTANCE.getInjector().inject(this);` to actually get the `@Inject`ed field populated.
 
-#Edge-case, Non-Singleton Dependencies
+##Edge-case, Non-Singleton Dependencies
 
 Personally, I don't currently see too many use cases for this, however, here it is. You may have asked, "well if every dependency I register in the `Injector` has to be a singleton, what if I want multiple instances of something in the `Injector`?". Enter the `name` value for `@Inject` and `@Assisted`. Say we have the now, non-singleton:
 ```java
