@@ -256,12 +256,12 @@ public final class Injector {
     }
 
     /**
-     * This should only be used by the {@link Registrar#register(Class)}.
+     * This should ideally only be used by the {@link Registrar#register(Class)}.
      * Register a class for injection later.
      *
      * @param injection
      */
-    protected <T extends Object> void register(final T injection) {
+    public <T extends Object> void register(final T injection) {
         if (injection.getClass().isAnnotationPresent(Singleton.class)) {
             for(final Object o : this.injectables) {
                 if(o.getClass().isInstance(injection)) {
