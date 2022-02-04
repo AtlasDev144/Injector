@@ -39,6 +39,7 @@ public final class Injector {
 
     private final Set<Object> injectables = new HashSet<>();
     private final Map<String, Object> namedInjectables = new HashMap<>();
+    private final Map<Class<?>, Object> implementations = new HashMap<>();
 
     private final Logger logger;
 
@@ -113,7 +114,9 @@ public final class Injector {
                                 if(!name.isEmpty()) {
                                     injection = this.namedInjectables.get(name);
                                 } else {
-                                    injection = this.find(arg).orElse(null);
+                                    if(this.implementations.containsKey(arg)) {
+                                        injection = this.implementations.get(arg);
+                                    } else injection = this.find(arg).orElse(null);
                                 }
 
                                 //Found an applicable injectable dependency
@@ -219,7 +222,9 @@ public final class Injector {
                                 if(!name.isEmpty()) {
                                     injection = this.namedInjectables.get(name);
                                 } else {
-                                    injection = this.find(arg).orElse(null);
+                                    if(this.implementations.containsKey(arg)) {
+                                        injection = this.implementations.get(arg);
+                                    } else injection = this.find(arg).orElse(null);
                                 }
 
                                 //Found an applicable injectable dependency
@@ -294,6 +299,21 @@ public final class Injector {
     }
 
     /**
+     * Register an object to be given as the value when the given {@code clazz} is the type being queried.
+     * @param clazz
+     * @param binding
+     * @param <T>
+     */
+    protected <T extends Object> void register(final Class<?> clazz, final T binding) {
+        if(binding.getClass().isAnnotationPresent(Singleton.class)) {
+            this.implementations.put(clazz, binding);
+        } else {
+            this.logger.severe("Error in Injector#register: " + binding.getClass().getSimpleName() + " doesn't have the @Singleton annotation." +
+                    "This annotation must be present for a class that isn't named to be registered in the Injector and is the developer's guarantee that only one instance of this class will exist.");
+        }
+    }
+
+    /**
      * Find an Injectable class of type {@code type}.
      * @param type
      * @param <T>
@@ -341,10 +361,15 @@ public final class Injector {
                 if(!name.isEmpty()) {
                     injection = this.namedInjectables.get(name);
                 } else {
-                    //Search singletons
-                    for (Object i : this.injectables) {
-                        if (i.getClass().isAssignableFrom(field.getType())) {
-                            injection = i;
+                    //Search bindings
+                    injection = this.implementations.get(field.getType());
+
+                    if(injection == null) {
+                        //Search singletons
+                        for (Object i : this.injectables) {
+                            if (i.getClass().isAssignableFrom(field.getType())) {
+                                injection = i;
+                            }
                         }
                     }
                 }
