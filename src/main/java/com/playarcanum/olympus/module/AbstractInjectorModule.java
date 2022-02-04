@@ -1,5 +1,7 @@
 package com.playarcanum.olympus.module;
 
+import com.playarcanum.olympus.Injector;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -15,11 +17,13 @@ public abstract class AbstractInjectorModule implements IInjectorModule<Abstract
     @Getter private final Set<Class<?>> injectables;
     @Getter private final Map<String, Class<?>> namedInjectables;
     @Getter private final Map<Class<?>, Class<?>> implementations;
+    @Getter private final Set<NamedImp<?>> namedImpls;
 
     public AbstractInjectorModule() {
         this.injectables = new HashSet<>();
         this.namedInjectables = new HashMap<>();
         this.implementations = new HashMap<>();
+        this.namedImpls = new HashSet<>();
     }
 
     /**
@@ -59,6 +63,18 @@ public abstract class AbstractInjectorModule implements IInjectorModule<Abstract
     }
 
     /**
+     * When the given {@code type} is the value wanting to be injected, the given {@code object}
+     * will actually be the given value and given name.
+     * @param type
+     * @param implementation
+     * @return
+     */
+    public <E> AbstractInjectorModule implementation(final Class<E> type, final @NonNull Class<? extends E> implementation, final @NonNull String name) {
+        this.namedImpls.add(new NamedImp<E>(type, implementation, name));
+        return this;
+    }
+
+    /**
      * Register a submodule of injectable classes.
      * @param module
      */
@@ -66,5 +82,13 @@ public abstract class AbstractInjectorModule implements IInjectorModule<Abstract
     public AbstractInjectorModule bind(final @NonNull AbstractInjectorModule module) {
         this.injectables.addAll(module.enable().injectables);
         return this;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static final class NamedImp<E> {
+        private final Class<E> type;
+        private final @NonNull Class<? extends E> implementation;
+        private final @NonNull String name;
     }
 }

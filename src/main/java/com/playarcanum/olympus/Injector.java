@@ -5,6 +5,7 @@ import com.playarcanum.olympus.annotations.Assisted;
 import com.playarcanum.olympus.annotations.Inject;
 import com.playarcanum.olympus.annotations.Singleton;
 import com.playarcanum.olympus.module.AbstractInjectorModule;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -40,6 +41,7 @@ public final class Injector {
     private final Set<Object> injectables = new HashSet<>();
     private final Map<String, Object> namedInjectables = new HashMap<>();
     private final Map<Class<?>, Object> implementations = new HashMap<>();
+    private final Set<Injector.NamedImp> namedImpls = new HashSet<>();
 
     private final Logger logger;
 
@@ -112,8 +114,15 @@ public final class Injector {
                                 //Find the named object or the singleton object if not named
                                 Object injection;
                                 if(!name.isEmpty()) {
-                                    injection = this.namedInjectables.get(name);
+                                    //Check named impls
+                                    injection = this.namedImpls.stream().filter(na -> na.name.equals(name)).findFirst().map(NamedImp::implementation).orElse(null);
+
+                                    if(injection == null) {
+                                        //Search named injectables
+                                        injection = this.namedInjectables.get(name);
+                                    }
                                 } else {
+                                    //Check implementations
                                     if(this.implementations.containsKey(arg)) {
                                         injection = this.implementations.get(arg);
                                     } else injection = this.find(arg).orElse(null);
@@ -220,7 +229,13 @@ public final class Injector {
                                 //Find the named object or the singleton object if not named
                                 Object injection;
                                 if(!name.isEmpty()) {
-                                    injection = this.namedInjectables.get(name);
+                                    //Check named impls
+                                    injection = this.namedImpls.stream().filter(na -> na.name.equals(name)).findFirst().map(NamedImp::implementation).orElse(null);
+
+                                    if(injection == null) {
+                                        //Search named injectables
+                                        injection = this.namedInjectables.get(name);
+                                    }
                                 } else {
                                     if(this.implementations.containsKey(arg)) {
                                         injection = this.implementations.get(arg);
@@ -314,6 +329,14 @@ public final class Injector {
     }
 
     /**
+     * Registers a named implementation.
+     * @param namedImp
+     */
+    protected void register(final @NonNull NamedImp namedImp) {
+        this.namedImpls.add(namedImp);
+    }
+
+    /**
      * Find an Injectable class of type {@code type}.
      * @param type
      * @param <T>
@@ -359,7 +382,13 @@ public final class Injector {
                 //Is this named?
                 final String name = field.getAnnotation(Inject.class).name();
                 if(!name.isEmpty()) {
-                    injection = this.namedInjectables.get(name);
+                    //Check named impls
+                    injection = this.namedImpls.stream().filter(na -> na.name.equals(name)).findFirst().map(NamedImp::implementation).orElse(null);
+
+                    if(injection == null) {
+                        //Search named injectables
+                        injection = this.namedInjectables.get(name);
+                    }
                 } else {
                     //Search bindings
                     injection = this.implementations.get(field.getType());
@@ -402,6 +431,7 @@ public final class Injector {
         /**
          * Register injectable classes via an {@link AbstractInjectorModule}. This is the preferred method of registering
          * injectable classes.
+         *
          * @param module
          * @return
          * @throws InstantiationException
@@ -411,7 +441,51 @@ public final class Injector {
             module.enable();
             return this.injectables(module.injectables())
                     .implementations(module.implementations())
-                    .named(module.namedInjectables());
+                    .named(module.namedInjectables())
+                    .namedImpl(module.namedImpls());
+        }
+
+        private Registrar namedImpl(final Set<AbstractInjectorModule.NamedImp<?>> namedImps) {
+            namedImps.forEach(n -> {
+                debug.info("Beginning Injector Registration of named implemented type " + n.type().getSimpleName()
+                        + " with implementation " + n.implementation().getSimpleName()
+                        + " with name " + n.name());
+                //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
+                List<Class<?>> injected = new ArrayList<>();
+                Field[] fields = n.implementation().getDeclaredFields();
+                for (Field field : fields) {
+                    if (field.isAnnotationPresent(Inject.class)) {
+                        injected.add(field.getType());
+                    }
+                }
+
+                //Ensure all necessary injected classes that this class needs are already created
+                if (!injected.isEmpty()) {
+                    for (Class<?> inject : injected) {
+                        Optional<?> loaded = this.injector.find(inject);
+                        if (!loaded.isPresent()) {
+                            try {
+                                this.register(inject);
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            }
+                            loaded = this.injector.find(inject);
+                        }
+                    }
+                }
+                try {
+
+                    this.injector.register(new NamedImp(n.type(), n.implementation().newInstance(), n.name()));
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                debug.info("Finished Injector Registration!");
+            });
+            return this;
         }
 
         private Registrar implementations(final @NonNull Map<Class<?>, Class<?>> implementations) {
@@ -457,6 +531,7 @@ public final class Injector {
 
         /**
          * Register the named injectables from an {@link AbstractInjectorModule}.
+         *
          * @param named
          * @return
          */
@@ -503,12 +578,13 @@ public final class Injector {
         /**
          * Register a Collection of classes as injectable sources. {@link Registrar#register(AbstractInjectorModule)} is
          * preferred over this.
+         *
          * @param classes
          * @return
          * @throws InstantiationException
          * @throws IllegalAccessException
          */
-        public Registrar injectables(final Collection<Class<?>> classes) throws InstantiationException, IllegalAccessException{
+        public Registrar injectables(final Collection<Class<?>> classes) throws InstantiationException, IllegalAccessException {
             debug.info("Beginning Injector Registration...");
             for (Class<?> aClass : classes) {
                 this.register(aClass);
@@ -520,6 +596,7 @@ public final class Injector {
         /**
          * Register an array of classes as injectable sources. {@link Registrar#register(AbstractInjectorModule)} is
          * preferred over this.
+         *
          * @param classes
          * @return
          * @throws InstantiationException
@@ -538,6 +615,7 @@ public final class Injector {
          * Registers a class to be used for injection and tries to instantiate all embedded injected classes this needs.
          * Assumes the passed class and all embedded injected classes all have a default constructor.
          * {@link Registrar#register(AbstractInjectorModule)} is preferred over this.
+         *
          * @param clazz
          * @return
          * @throws InstantiationException
@@ -568,6 +646,14 @@ public final class Injector {
             debug.info("Finished Injector Registration!");
             return this;
         }
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static final class NamedImp {
+        private final Class<?> type;
+        private final @NonNull Object implementation;
+        private final @NonNull String name;
     }
 
 }

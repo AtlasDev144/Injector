@@ -39,6 +39,15 @@ public interface IInjectorModule<T extends IInjectorModule> {
     <E> IInjectorModule<T> implementation(final Class<E> type, final @NonNull Class<? extends E> implementation);
 
     /**
+     * When the given {@code type} is the value wanting to be injected, the given {@code object}
+     * will actually be the given value and given name.
+     * @param type
+     * @param implementation
+     * @return
+     */
+    <E> IInjectorModule<T> implementation(final Class<E> type, final @NonNull Class<? extends E> implementation, final @NonNull String name);
+
+    /**
      * Register a submodule and all of its values.
      * @param submodule
      * @return
