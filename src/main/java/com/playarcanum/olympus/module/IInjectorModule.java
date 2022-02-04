@@ -36,7 +36,7 @@ public interface IInjectorModule<T extends IInjectorModule> {
      * @param implementation
      * @return
      */
-    IInjectorModule<T> implementation(final Class<?> type, final @NonNull Object implementation);
+    <E> IInjectorModule<T> implementation(final Class<E> type, final @NonNull Class<? extends E> implementation);
 
     /**
      * Register a submodule and all of its values.

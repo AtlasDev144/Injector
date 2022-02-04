@@ -409,7 +409,50 @@ public final class Injector {
          */
         public Registrar register(final @NonNull AbstractInjectorModule module) throws InstantiationException, IllegalAccessException {
             module.enable();
-            return this.register(module.injectables()).register(module.namedInjectables());
+            return this.injectables(module.injectables())
+                    .implementations(module.implementations())
+                    .named(module.namedInjectables());
+        }
+
+        private Registrar implementations(final @NonNull Map<Class<?>, Class<?>> implementations) {
+            implementations.forEach((type, imp) -> {
+                debug.info("Beginning Injector Registration of implemented type " + type.getSimpleName() + " with implementation " + imp.getSimpleName());
+                //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
+                List<Class<?>> injected = new ArrayList<>();
+                Field[] fields = imp.getDeclaredFields();
+                for (Field field : fields) {
+                    if (field.isAnnotationPresent(Inject.class)) {
+                        injected.add(field.getType());
+                    }
+                }
+
+                //Ensure all necessary injected classes that this class needs are already created
+                if (!injected.isEmpty()) {
+                    for (Class<?> inject : injected) {
+                        Optional<?> loaded = this.injector.find(inject);
+                        if (!loaded.isPresent()) {
+                            try {
+                                this.register(inject);
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            }
+                            loaded = this.injector.find(inject);
+                        }
+                    }
+                }
+                try {
+                    this.injector.register(type, imp.newInstance());
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                debug.info("Finished Injector Registration!");
+            });
+
+            return this;
         }
 
         /**
@@ -417,7 +460,7 @@ public final class Injector {
          * @param named
          * @return
          */
-        private Registrar register(final @NonNull Map<String, Class<?>> named) {
+        private Registrar named(final @NonNull Map<String, Class<?>> named) {
             named.forEach((string, clazz) -> {
                 debug.info("Beginning Injector Registration of named type " + string + "...");
                 //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
@@ -465,7 +508,7 @@ public final class Injector {
          * @throws InstantiationException
          * @throws IllegalAccessException
          */
-        public Registrar register(final Collection<Class<?>> classes) throws InstantiationException, IllegalAccessException{
+        public Registrar injectables(final Collection<Class<?>> classes) throws InstantiationException, IllegalAccessException{
             debug.info("Beginning Injector Registration...");
             for (Class<?> aClass : classes) {
                 this.register(aClass);
