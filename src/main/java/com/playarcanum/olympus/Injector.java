@@ -172,6 +172,110 @@ public final class Injector {
     }
 
     /**
+     * Invokes the specified static {@code method} on the given {@code class}, providing {@link Assisted} arguments
+     * and using the given optional {@code arguments}.
+     * @param clazz
+     * @param method
+     * @param arguments
+     * @param <T>
+     * @return
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws InjectorException
+     */
+    public <T> T invokeStatic(final Class<?> clazz, final @NonNull String method, final Object... arguments) throws InvocationTargetException, IllegalAccessException, InjectorException {
+        final Method[] methods = clazz.getDeclaredMethods();
+
+        //Get classes of given parameters
+        final Class<?>[] params = new Class[arguments == null ? 0 : arguments.length];
+        if(params.length > 0) {
+            for(int i = 0; i < arguments.length; i++) {
+                params[i] = arguments[i].getClass();
+            }
+        }
+
+        //Find the specified method
+        for(final Method m : methods) {
+            if(m.getName().equalsIgnoreCase(method)) {
+                //If it has no arguments
+                if(m.getParameterCount() == 0) return (T) m.invoke(null);
+
+                //The parameter values to give the method
+                final Object[] assistedParams = new Object[m.getParameterCount()];
+
+                final Queue<Object> parametersCopy = new ArrayDeque<>();
+                for(final Object param : arguments) {
+                    parametersCopy.add(param);
+                }
+
+                //Classes of this method's arguments
+                final Class<?>[] argsClasses = m.getParameterTypes();
+
+                //The annotations of each argument
+                final Annotation[][] argAnnotations = m.getParameterAnnotations();
+
+                //Iterate each argument
+                for(int i = 0; i < argsClasses.length; i++) {
+                    //We need to ensure every argument is account for, either by @Assisted or by the parameters passed in
+                    final Class<?> arg = argsClasses[i];
+
+                    boolean assistedHandled = false;
+                    if(argAnnotations[i] != null) {
+                        for(final Annotation annotation : argAnnotations[i]) {
+                            if(annotation instanceof Assisted) {
+                                //See if we're looking for a named object
+                                final String name = ((Assisted)annotation).name();
+
+                                //Find the named object or the singleton object if not named
+                                Object injection;
+                                if(!name.isEmpty()) {
+                                    //Check named impls
+                                    injection = this.namedImpls.stream().filter(na -> na.name.equals(name)).findFirst().map(NamedImp::implementation).orElse(null);
+
+                                    if(injection == null) {
+                                        //Search named injectables
+                                        injection = this.namedInjectables.get(name);
+                                    }
+                                } else {
+                                    if(this.implementations.containsKey(arg)) {
+                                        injection = this.implementations.get(arg);
+                                    } else injection = this.find(arg).orElse(null);
+                                }
+
+                                //Found an applicable injectable dependency
+                                if(injection != null) {
+                                    assistedParams[i] = arg.cast(injection);
+                                    assistedHandled = true;
+                                } else throw name.isEmpty() ? new InjectorException("Cannot find an injectable dependency for @Assisted paramter: "
+                                        + params[i].getSimpleName() + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                        "Was a corresponding depency registered for this?") :
+                                        new InjectorException("Cannot find an injectable dependency for @Assisted named paramter: "
+                                                + params[i].getSimpleName() + ", of assisted named: " + name + ", which is in the constructor of class: " + arg.getSimpleName() + ". " +
+                                                "Was a corresponding depency registered for this?");
+                            }
+                        }
+                    }
+
+                    //This arg can't be found in the assisted values present in the Injector, so get the next passed param
+                    //This assumes the passed params were passed in order of necessity by the developer
+                    if(!assistedHandled) {
+                        final Object param = parametersCopy.poll();
+                        assistedParams[i] = param;
+                    }
+                }
+
+                boolean canInvoke = true;
+                for(int i = 0; i < assistedParams.length; i++) {
+                    if(assistedParams[i] == null) canInvoke = false;
+                }
+
+                if(canInvoke) return (T) m.invoke(null, assistedParams);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Invokes the specified {@code method} on the given {@code instance}, providing {@link Assisted} arguments
      * and using the given optional {@code arguments}.
      * @param instance
