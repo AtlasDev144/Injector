@@ -197,6 +197,8 @@ public final class Injector {
         //Find the specified method
         for(final Method m : methods) {
             if(m.getName().equalsIgnoreCase(method)) {
+                m.setAccessible(true);
+
                 //If it has no arguments
                 if(m.getParameterCount() == 0) return (T) m.invoke(null);
 
@@ -301,6 +303,8 @@ public final class Injector {
         //Find the specified method
         for(final Method m : methods) {
             if(m.getName().equalsIgnoreCase(method)) {
+                m.setAccessible(true);
+                
                 //If it has no arguments
                 if(m.getParameterCount() == 0) return (T) m.invoke(instance);
 
