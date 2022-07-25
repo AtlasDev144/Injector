@@ -137,7 +137,7 @@ public final class Zone {
   private final Set<Player> players;
   
   public boolean has(final Player player) {
-    return this.players.stream().anyMatch(p -> p.equals(player));
+    return this.players.contains(player);
   }
 }
 ```
