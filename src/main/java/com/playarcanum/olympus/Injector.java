@@ -1,5 +1,6 @@
 package com.playarcanum.olympus;
 
+import com.playarcanum.Debugger;
 import com.playarcanum.Nullable;
 import com.playarcanum.olympus.annotations.Assisted;
 import com.playarcanum.olympus.annotations.Inject;
@@ -43,10 +44,10 @@ public final class Injector {
     private final Map<Class<?>, Object> implementations = new HashMap<>();
     private final Set<Injector.NamedImp> namedImpls = new HashSet<>();
 
-    private final Logger logger;
+    private final Debugger.Section logger;
 
-    public Injector() {
-        this.logger = Logger.getLogger("Injector");
+    public Injector(final Debugger.Section logger) {
+        this.logger = logger;
         this.registrar = new Registrar(this);
     }
 
@@ -393,15 +394,15 @@ public final class Injector {
         if (injection.getClass().isAnnotationPresent(Singleton.class)) {
             for(final Object o : this.injectables) {
                 if(o.getClass().isInstance(injection)) {
-                    this.logger.severe("Tried registering multiple instances of type: " + injection.getClass().getSimpleName() + ", yet this class is marked as a Singleton.");
+                    this.logger.error("Tried registering multiple instances of type: " + injection.getClass().getSimpleName() + ", yet this class is marked as a Singleton.");
                     return;
                 }
             }
 
             this.injectables.add(injection);
-            this.logger.info("Injector registered: " + injection.getClass().getSimpleName());
+            this.logger.log("Injector registered: " + injection.getClass().getSimpleName());
         } else {
-            this.logger.severe("Error in Injector#register: " + injection.getClass().getSimpleName() + " doesn't have the @Singleton annotation." +
+            this.logger.error("Error in Injector#register: " + injection.getClass().getSimpleName() + " doesn't have the @Singleton annotation." +
                     "This annotation must be present for a class that isn't named to be registered in the Injector and is the developer's guarantee that only one instance of this class will exist.");
         }
     }
@@ -414,10 +415,10 @@ public final class Injector {
      */
     protected <T extends Object> void register(final T injection, final String name) {
         if (injection.getClass().isAnnotationPresent(Singleton.class)) {
-            this.logger.severe("Tried registering an @Singleton class as a named class: " + injection.getClass().getSimpleName());
+            this.logger.error("Tried registering an @Singleton class as a named class: " + injection.getClass().getSimpleName());
         } else {
             this.namedInjectables.put(name, injection);
-            this.logger.info("Injector registered: " + injection.getClass().getSimpleName() + " with name: " + name);
+            this.logger.log("Injector registered: " + injection.getClass().getSimpleName() + " with name: " + name);
         }
     }
 
@@ -431,7 +432,7 @@ public final class Injector {
         if(binding.getClass().isAnnotationPresent(Singleton.class)) {
             this.implementations.put(clazz, binding);
         } else {
-            this.logger.severe("Error in Injector#register: " + binding.getClass().getSimpleName() + " doesn't have the @Singleton annotation." +
+            this.logger.error("Error in Injector#register: " + binding.getClass().getSimpleName() + " doesn't have the @Singleton annotation." +
                     "This annotation must be present for a class that isn't named to be registered in the Injector and is the developer's guarantee that only one instance of this class will exist.");
         }
     }
@@ -512,14 +513,14 @@ public final class Injector {
                 }
 
                 if (injection == null) {
-                    this.logger.severe("Intended injected class cannot be found in the Injector. Did you register it in the Registrar?");
+                    this.logger.error("Intended injected class cannot be found in the Injector. Did you register it in the Registrar?");
                     return false;
                 }
 
                 try {
                     field.set(parent, injection);
                 } catch (IllegalAccessException e) {
-                    this.logger.severe("Couldn't access field InjectProcessor: " + field.getName());
+                    this.logger.error("Couldn't access field InjectProcessor: " + field.getName());
                     e.printStackTrace();
                 }
             }
@@ -529,7 +530,7 @@ public final class Injector {
 
     public static class Registrar {
         private final Injector injector;
-        private final Logger debug;
+        private final Debugger.Section debug;
 
         public Registrar(Injector injector) {
             this.injector = injector;
@@ -555,7 +556,7 @@ public final class Injector {
 
         private Registrar namedImpl(final Set<AbstractInjectorModule.NamedImp<?>> namedImps) {
             namedImps.forEach(n -> {
-                debug.info("Beginning Injector Registration of named implemented type " + n.type().getSimpleName()
+                debug.log("Beginning Injector Registration of named implemented type " + n.type().getSimpleName()
                         + " with implementation " + n.implementation().getSimpleName()
                         + " with name " + n.name());
                 //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
@@ -591,14 +592,14 @@ public final class Injector {
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-                debug.info("Finished Injector Registration!");
+                debug.log("Finished Injector Registration!");
             });
             return this;
         }
 
         private Registrar implementations(final @NonNull Map<Class<?>, Class<?>> implementations) {
             implementations.forEach((type, imp) -> {
-                debug.info("Beginning Injector Registration of implemented type " + type.getSimpleName() + " with implementation " + imp.getSimpleName());
+                debug.log("Beginning Injector Registration of implemented type " + type.getSimpleName() + " with implementation " + imp.getSimpleName());
                 //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
                 List<Class<?>> injected = new ArrayList<>();
                 Field[] fields = imp.getDeclaredFields();
@@ -631,7 +632,7 @@ public final class Injector {
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-                debug.info("Finished Injector Registration!");
+                debug.log("Finished Injector Registration!");
             });
 
             return this;
@@ -645,7 +646,7 @@ public final class Injector {
          */
         private Registrar named(final @NonNull Map<String, Class<?>> named) {
             named.forEach((string, clazz) -> {
-                debug.info("Beginning Injector Registration of named type " + string + "...");
+                debug.log("Beginning Injector Registration of named type " + string + "...");
                 //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
                 List<Class<?>> injected = new ArrayList<>();
                 Field[] fields = clazz.getDeclaredFields();
@@ -678,7 +679,7 @@ public final class Injector {
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-                debug.info("Finished Injector Registration!");
+                debug.log("Finished Injector Registration!");
             });
             return this;
         }
@@ -693,11 +694,11 @@ public final class Injector {
          * @throws IllegalAccessException
          */
         public Registrar injectables(final Collection<Class<?>> classes) throws InstantiationException, IllegalAccessException {
-            debug.info("Beginning Injector Registration...");
+            debug.log("Beginning Injector Registration...");
             for (Class<?> aClass : classes) {
                 this.register(aClass);
             }
-            debug.info("Finished Injector Registration!");
+            debug.log("Finished Injector Registration!");
             return this;
         }
 
@@ -711,11 +712,11 @@ public final class Injector {
          * @throws IllegalAccessException
          */
         public Registrar register(final Class<?>... classes) throws InstantiationException, IllegalAccessException {
-            debug.info("Beginning Injector Registration...");
+            debug.log("Beginning Injector Registration...");
             for (Class<?> c : classes) {
                 this.register(c);
             }
-            debug.info("Finished Injector Registration!");
+            debug.log("Finished Injector Registration!");
             return this;
         }
 
@@ -730,7 +731,7 @@ public final class Injector {
          * @throws IllegalAccessException
          */
         public Registrar register(final Class<?> clazz) throws InstantiationException, IllegalAccessException {
-            debug.info("Beginning Injector Registration...");
+            debug.log("Beginning Injector Registration...");
             //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
             List<Class<?>> injected = new ArrayList<>();
             Field[] fields = clazz.getDeclaredFields();
@@ -751,7 +752,7 @@ public final class Injector {
                 }
             }
             this.injector.register(this.injector.construct(clazz));
-            debug.info("Finished Injector Registration!");
+            debug.log("Finished Injector Registration!");
             return this;
         }
     }

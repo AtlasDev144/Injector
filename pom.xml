@@ -13,6 +13,13 @@
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -21,6 +28,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.AtlasDev144</groupId>
+            <artifactId>Debugger</artifactId>
+            <version>0.0.1.a</version>
+        </dependency>
     </dependencies>
 
 </project>
