@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.github.AtlasDev144</groupId>
             <artifactId>Debugger</artifactId>
-            <version>0.0.1.e</version>
+            <version>0.0.1.f</version>
         </dependency>
     </dependencies>
 
