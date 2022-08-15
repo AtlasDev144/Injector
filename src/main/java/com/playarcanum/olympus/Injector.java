@@ -408,7 +408,7 @@ public final class Injector {
     }
 
     /**
-     * Register a named class for injection.
+     * Register a named object for injection.
      * @param injection
      * @param name
      * @param <T>
@@ -719,6 +719,11 @@ public final class Injector {
          * @throws IllegalAccessException
          */
         public Registrar register(final Class<?> clazz) throws InstantiationException, IllegalAccessException {
+            //Don't register if it's a Singleton and an instance already exists.
+            if(clazz.isAnnotationPresent(Singleton.class) && this.injector.find(clazz).isPresent()) {
+                return this;
+            }
+
             //Get all fields marked for injection within this class, ensuring this class' dependencies are already lodaded
             List<Class<?>> injected = new ArrayList<>();
             Field[] fields = clazz.getDeclaredFields();
