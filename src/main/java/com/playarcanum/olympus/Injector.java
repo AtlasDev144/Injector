@@ -1,6 +1,6 @@
 package com.playarcanum.olympus;
 
-import com.playarcanum.Debugger;
+import com.playarcanum.debugger.Debugger;
 import com.playarcanum.Nullable;
 import com.playarcanum.olympus.annotations.Assisted;
 import com.playarcanum.olympus.annotations.Inject;
